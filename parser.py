@@ -167,7 +167,12 @@ class ParsedCommand:
     weapon_name: str
     skin: str
     wear: str | None = None  # 中文磨损名，未指定为 None
+    stat_trak: bool = False  # 是否查询 StatTrak™ 计数器版本
     error: str | None = None
+
+
+# StatTrak™ 计数器关键词（用于指定查询暗金版本）
+STAT_ALIASES = {"stat", "stattrak", "statrak", "暗金", "计数器", "sst"}
 
 
 def _norm(s: str) -> str:
@@ -201,6 +206,13 @@ def parse_command(text: str) -> ParsedCommand:
             break
     rest = [t for j, t in enumerate(tokens) if j != wear_idx]
 
+    # 1.5 提取 StatTrak 关键词
+    stat_trak = False
+    stat_indices = {j for j, t in enumerate(rest) if _norm(t) in STAT_ALIASES}
+    if stat_indices:
+        stat_trak = True
+        rest = [t for j, t in enumerate(rest) if j not in stat_indices]
+
     if not rest:
         return ParsedCommand("", "", "", error="用法：/buff [枪名] [皮肤名] [磨损]\n例如：/buff ak 燃料喷射器 久经")
 
@@ -228,21 +240,21 @@ def parse_command(text: str) -> ParsedCommand:
             weapon_name,
             "",
             wear=wear,
+            stat_trak=stat_trak,
             error="还差皮肤名，例如：/buff ak 燃料喷射器 久经",
         )
-    return ParsedCommand(weapon_internal, weapon_name, skin, wear=wear)
+    return ParsedCommand(weapon_internal, weapon_name, skin, wear=wear, stat_trak=stat_trak)
 
 
 def extract_wear_from_name(name: str) -> str | None:
-    """从商品名（如 AK-47 | 燃料喷射器 (久经沙场)）提取磨损中文名。"""
+    """从商品名提取磨损中文名。
+
+    兼容两种命名：AK-47 | 燃料喷射器 (久经沙场)
+              以及 AK-47 | 燃料喷射器 (久经沙场) (StatTrak™)
+    """
     if not name:
         return None
-    idx = name.rfind("(")
-    if idx == -1:
-        return None
-    tail = name[idx + 1 :]
-    tail = tail.split(")")[0]
     for w in WEAR_ORDER:
-        if w in tail:
+        if f"({w})" in name:
             return w
     return None

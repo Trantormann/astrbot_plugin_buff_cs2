@@ -26,6 +26,7 @@ HELP_TEXT = (
     "例子：/buff ak 燃料喷射器 久经\n"
     "      /buff awp 二西莫夫\n"
     "磨损可写：崭新/fn、略有/mw、久经/ft、破损/ww、战痕/bs，不写则列出全部磨损\n"
+    "查 StatTrak 计数器版在末尾加 stat/暗金，如 /buff ak 燃料喷射器 久经 stat"
 )
 
 
@@ -122,7 +123,9 @@ class BuffPlugin(Star):
 
         # 1. 解析出 goods_id（或列出磨损让用户选）
         try:
-            kind, payload = await resolve_goods(client, parsed.weapon_name, parsed.skin, parsed.wear)
+            kind, payload = await resolve_goods(
+                client, parsed.weapon_name, parsed.skin, parsed.wear, parsed.stat_trak
+            )
         except BuffError as e:
             yield event.plain_result(f"查询出错：{e}")
             return

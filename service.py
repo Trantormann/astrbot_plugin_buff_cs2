@@ -41,7 +41,13 @@ def _parse_suggestions(suggestions: list) -> list[dict]:
     return cands
 
 
-async def resolve_goods(client: BuffClient, weapon_name: str, skin: str, wear: str | None):
+async def resolve_goods(
+    client: BuffClient,
+    weapon_name: str,
+    skin: str,
+    wear: str | None,
+    stat_trak: bool = False,
+):
     """解析出目标 goods_id。
 
     返回 (kind, payload)：
@@ -61,31 +67,38 @@ async def resolve_goods(client: BuffClient, weapon_name: str, skin: str, wear: s
     if not cands:
         return ("not_found", "解析搜索结果失败，换个关键词试试")
 
-    def _non_stat_first(items: list) -> list:
-        non_stat = [c for c in items if not c["stat"]]
-        return non_stat if non_stat else items
+    def _pick(items: list) -> list:
+        """按是否 StatTrak 过滤；目标版本不存在时回退为其他版本。"""
+        want = [c for c in items if c["stat"] == stat_trak]
+        return want if want else items
 
     if wear:
-        exact = _non_stat_first([c for c in cands if c["wear"] == wear])
+        exact = _pick([c for c in cands if c["wear"] == wear])
         if exact:
             return ("ok", exact[0]["goods_id"])
         # 指定磨损没匹配到 -> 列出实际可选的磨损
-        return await _build_wear_list(client, cands, query)
+        return await _build_wear_list(client, cands, query, stat_trak)
 
     # 未指定磨损
     wears = {c["wear"] for c in cands if c["wear"]}
     if len(wears) == 1 and None not in [c["wear"] for c in cands]:
-        return ("ok", _non_stat_first(cands)[0]["goods_id"])
-    return await _build_wear_list(client, cands, query)
+        return ("ok", _pick(cands)[0]["goods_id"])
+    return await _build_wear_list(client, cands, query, stat_trak)
 
 
-async def _build_wear_list(client: BuffClient, cands: list, query: str):
-    """构建磨损候选列表（每个磨损取一个非 StatTrak 的 goods_id 并抓底价）。"""
+async def _build_wear_list(client: BuffClient, cands: list, query: str, stat_trak: bool = False):
+    """构建磨损候选列表（优先取目标版本，目标版本不存在时回退普通版，并抓底价）。"""
     picked: dict[str, dict] = {}
     for c in cands:
         if not c["wear"] or c["wear"] in picked:
             continue
-        picked[c["wear"]] = {"wear": c["wear"], "goods_id": c["goods_id"], "name": c["name"]}
+        if c["stat"] == stat_trak:
+            picked[c["wear"]] = {"wear": c["wear"], "goods_id": c["goods_id"], "name": c["name"]}
+    if not picked:
+        for c in cands:
+            if not c["wear"] or c["wear"] in picked:
+                continue
+            picked[c["wear"]] = {"wear": c["wear"], "goods_id": c["goods_id"], "name": c["name"]}
     result = []
     for w in WEAR_ORDER:
         if w in picked:
