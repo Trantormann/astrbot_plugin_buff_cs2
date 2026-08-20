@@ -12,9 +12,9 @@ import os
 import time
 
 from astrbot.api import logger
-from astrbot.api.event import AstrMessageEvent, MessageEventResult
-from astrbot.api.message import Image, MessageChain, Plain
-from astrbot.api.star import Context, Star, filter, register
+from astrbot.api.event import AstrMessageEvent
+import astrbot.api.event.filter as filter
+from astrbot.api.star import Context, Star, register
 
 from .analysis import WEAPON_CATEGORY_GROUP
 from .buff_client import BuffClient, BuffError
@@ -26,20 +26,20 @@ HELP_TEXT = (
     "例子：/buff ak 燃料喷射器 久经\n"
     "      /buff awp 二西莫夫\n"
     "磨损可写：崭新/fn、略有/mw、久经/ft、破损/ww、战痕/bs，不写则列出全部磨损\n"
-    "武器类会自动追加同品类最值得关注的三件物品（低印花溢价优先）"
 )
 
 
 @register(
     "astrbot_plugin_buff_cs2",
-    "CS 饰品 - BUFF 平台商品询价",
-    "查询 CS2 饰品价格 / 走势 / 同品类值得关注商品",
-    version="0.1.0",
-    author="Trantormann",
+    "Trantormann",
+    "CS 饰品 - BUFF 平台商品询价：查询 CS2 饰品价格 / 走势 / 同品类值得关注商品",
+    "0.1.0",
+    "https://github.com/Trantormann/astrbot_plugin_buff_cs2",
 )
 class BuffPlugin(Star):
     def __init__(self, context: Context, config=None):
         super().__init__(context, config)
+        self.config = config or {}
         self._client: BuffClient | None = None
         self._cooldowns: dict[str, float] = {}
         self._scan_cache: dict[str, tuple] = {}
@@ -158,13 +158,15 @@ class BuffPlugin(Star):
             yield event.plain_result("查询时出了点问题，稍后再试喵")
             return
 
-        chain = MessageChain()
+        result = event.make_result()
         if msg["image_url"]:
-            chain.append(Image(url=msg["image_url"]))
-        chain.append(Plain(msg["text"]))
-        yield event.chain_result(chain)
+            result.url_image(msg["image_url"])
+        result.message(msg["text"])
+        yield result
 
-        # 3. 消息二：武器类扫描同品类
+        # 3. 消息二：武器类扫描同品类（默认关闭）
+        if not self.config.get("enable_category_scan", False):
+            return
         type_internal = msg.get("type_internal") or ""
         if type_internal not in WEAPON_CATEGORY_GROUP:
             return

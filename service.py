@@ -105,25 +105,6 @@ async def _build_wear_list(client: BuffClient, cands: list, query: str):
 
 # ------------------------- 消息一：基础信息 + 走势 -------------------------
 
-def _buy_order_condition_text(order: dict | None) -> str:
-    """识别求购单附带的条件（指定磨损区间 / 指定印花等）。"""
-    if not order:
-        return ""
-    conds = []
-    if order.get("specific"):
-        conds.append("指定条件")
-    for k in ("min_paintwear", "max_paintwear", "paintwear_min", "paintwear_max"):
-        v = order.get(k)
-        if v is not None and str(v).replace(".", "").replace("0", "") != "":
-            conds.append("指定磨损区间")
-            break
-    if order.get("fade") or order.get("seed"):
-        conds.append("指定渐变/序号")
-    if order.get("sticker_count") or order.get("sticker"):
-        conds.append("指定印花")
-    return "；".join(conds)
-
-
 async def fetch_price_message(client: BuffClient, goods_id: str) -> dict:
     """抓取并组装消息一。返回 {"text", "image_url"}。"""
     info = await client.get_goods_info(goods_id)
@@ -161,9 +142,6 @@ async def fetch_price_message(client: BuffClient, goods_id: str) -> dict:
         buy_orders = []
     if buy_max is not None and float(buy_max) > 0:
         lines.append(f"最高求购：¥{float(buy_max):,.2f}（{len(buy_orders)} 个求购单）")
-        cond = _buy_order_condition_text(buy_orders[0] if buy_orders else None)
-        if cond:
-            lines.append(f"顶格求购附带条件：{cond}")
     else:
         lines.append("最高求购：暂无人求购")
     if steam_price:
@@ -260,6 +238,4 @@ def format_attention_text(category_group: str, top3: list) -> str:
             lines.append(f"   印花溢价 SP {sp:+.1f}%（印花总价 ¥{item['sticker_total']:,.2f}）")
         else:
             lines.append("   无印花（普通低磨损底价件）")
-    lines.append("")
-    lines.append("排序规则：低印花溢价(SP<30%)优先 > 低价格 > 低磨损")
     return "\n".join(lines)

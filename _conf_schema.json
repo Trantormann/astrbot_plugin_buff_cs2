@@ -12,6 +12,12 @@
         "default": 5,
         "min": 1
     },
+    "enable_category_scan": {
+        "description": "是否启用同品类扫描（消息二：值得关注商品）",
+        "type": "bool",
+        "hint": "默认关闭。开启后武器类查询会额外扫描同品类并计算印花溢价，需多花十几秒，请按需开启。",
+        "default": false
+    },
     "request_delay": {
         "description": "每次 BUFF 请求间隔（秒）",
         "type": "float",
