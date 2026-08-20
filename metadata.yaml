@@ -1,0 +1,22 @@
+name: astrbot_plugin_buff_cs2
+display_name: CS 饰品 - BUFF 平台商品询价
+desc: |
+  通过网易 BUFF 平台查询 CS2 饰品价格。
+
+  - 指令：/buff [枪名] [皮肤名] [磨损]，如 /buff ak 燃料喷射器 久经
+  - 消息一：饰品基础信息（官方名称、图片）、当前最低供应价、最高求购价（含求购条件）、30 天价格走势与一句购买建议
+  - 消息二（武器类）：同品类最值得关注的三件物品，按「低印花溢价率(SP<30%) > 低价格 > 低磨损」排序
+  - 磨损支持中文（崭新出厂/略有磨损/久经沙场/破损不堪/战痕累累）与缩写（FN/MW/FT/WW/BS），未写磨损时列出全部磨损供选择
+
+  使用前需在插件配置中填写 BUFF 登录 Cookie（buff.163.com 的 session 值），否则无法查询。
+version: 0.1.0
+author: Trantormann
+repo: https://github.com/Trantormann/astrbot_plugin_buff_cs2
+tags:
+  - CS2
+  - BUFF
+  - 饰品
+  - 价格
+  - 行情
+support_platforms:
+  - aiocqhttp

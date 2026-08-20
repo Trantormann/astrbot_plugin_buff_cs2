@@ -1,0 +1,45 @@
+{
+    "buff_cookie": {
+        "description": "BUFF 登录 Cookie（session 值，无需带 session= 前缀）",
+        "type": "string",
+        "hint": "Chrome 登录 buff.163.com 后按 F12 → Application → Cookies → buff.163.com，复制名为 session 的 Value。BUFF 接口必须登录才能访问，留空时插件无法查询。",
+        "default": ""
+    },
+    "cooldown_seconds": {
+        "description": "同一用户指令冷却时间（秒）",
+        "type": "int",
+        "hint": "防止刷接口触发 BUFF 反爬。默认 5 秒。",
+        "default": 5,
+        "min": 1
+    },
+    "request_delay": {
+        "description": "每次 BUFF 请求间隔（秒）",
+        "type": "float",
+        "hint": "BUFF 反爬较严，连续快速请求会被 429 限流。默认 0.8 秒。",
+        "default": 0.8,
+        "min": 0.1
+    },
+    "scan_num": {
+        "description": "同品类扫描商品数量（消息二）",
+        "type": "int",
+        "hint": "扫描同品类的商品数量上限，越大越准但耗时越久（每个商品约 1 次请求）。默认 30。",
+        "default": 30,
+        "min": 5,
+        "max": 100
+    },
+    "cache_ttl": {
+        "description": "同品类扫描结果缓存时间（秒）",
+        "type": "int",
+        "hint": "缓存同品类扫描结果，避免频繁查询重复请求 BUFF。默认 600 秒（10 分钟）。",
+        "default": 600,
+        "min": 0
+    },
+    "max_retries": {
+        "description": "请求失败最大重试次数",
+        "type": "int",
+        "hint": "遇限流/网络错误的自动重试次数。默认 3。",
+        "default": 3,
+        "min": 0,
+        "max": 5
+    }
+}
