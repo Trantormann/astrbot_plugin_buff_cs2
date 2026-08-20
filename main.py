@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import time
 
 from astrbot.api import logger
@@ -45,10 +46,25 @@ class BuffPlugin(Star):
 
     # ---------------- 基础工具 ----------------
 
+    def _load_cookie(self) -> str:
+        """Cookie 优先级：插件配置 > 插件目录 .local/buff_cookie.txt（gitignored）。"""
+        cfg = (self.config.get("buff_cookie") or "").strip()
+        if cfg:
+            return cfg
+        path = os.path.join(os.path.dirname(__file__), ".local", "buff_cookie.txt")
+        try:
+            with open(path, encoding="utf-8") as f:
+                value = f.read().strip()
+                if value:
+                    return value
+        except OSError:
+            pass
+        return ""
+
     def _get_client(self) -> BuffClient:
         if self._client is None:
             self._client = BuffClient(
-                cookie=self.config.get("buff_cookie", ""),
+                cookie=self._load_cookie(),
                 request_delay=self.config.get("request_delay", 0.8),
                 max_retries=self.config.get("max_retries", 3),
             )
